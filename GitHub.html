@@ -132,7 +132,7 @@
 <body>
     <!-- Indicateur de sync -->
     <div id="syncIndicator" class="sync-indicator">
-        📡 GitHub Sync
+        📡 Mode Local
     </div>
 
     <!-- Page de connexion -->
@@ -283,25 +283,48 @@
                 const response = await fetch(GITHUB_DATA_URL + '?t=' + Date.now());
                 if (response.ok) {
                     const data = await response.json();
-                    allChallenges = data.challenges || {};
-                    allUsers = data.users || {};
-                    console.log('📡 Données chargées depuis GitHub');
+                    
+                    // Merger les données GitHub avec les données locales
+                    const localData = localStorage.getItem('studyGitHubData');
+                    if (localData) {
+                        const local = JSON.parse(localData);
+                        
+                        // Garder les challenges locaux + ajouter ceux de GitHub
+                        allChallenges = { ...local.challenges, ...data.challenges };
+                        
+                        // Mettre à jour les utilisateurs
+                        allUsers = { ...local.users, ...data.users };
+                    } else {
+                        allChallenges = data.challenges || {};
+                        allUsers = data.users || {};
+                    }
+                    
+                    console.log('📡 Données synchronisées avec GitHub');
+                    document.getElementById('syncIndicator').textContent = '📡 GitHub Sync';
+                    document.getElementById('syncIndicator').style.background = 'var(--success)';
                     return true;
                 }
             } catch (error) {
                 console.log('⚠️ GitHub non disponible, utilisation des données locales');
             }
             
-            // Fallback données locales
+            // Fallback données locales SEULEMENT
             const localData = localStorage.getItem('studyGitHubData');
             if (localData) {
                 const data = JSON.parse(localData);
-                allChallenges = data.challenges || defaultData.challenges;
-                allUsers = data.users || defaultData.users;
+                allChallenges = data.challenges || {};
+                allUsers = data.users || {};
+                console.log('💾 Utilisation des données locales');
             } else {
+                // Première utilisation : utiliser les données par défaut
                 allChallenges = defaultData.challenges;
                 allUsers = defaultData.users;
+                console.log('🆕 Première utilisation - données par défaut');
             }
+            
+            // Mettre à jour l'indicateur pour mode local
+            document.getElementById('syncIndicator').textContent = '💾 Mode Local';
+            document.getElementById('syncIndicator').style.background = '#f59e0b';
             return false;
         }
 
@@ -313,19 +336,24 @@
         }
 
         function startSync() {
-            // Synchronisation automatique toutes les 10 secondes
+            // Synchronisation automatique toutes les 30 secondes (plus long pour éviter les conflits)
             syncInterval = setInterval(async () => {
                 if (currentUser) {
+                    console.log('🔄 Synchronisation automatique...');
                     await loadDataFromGitHub();
                     displayChallenges();
                     displayUsers();
+                    
+                    // Sauvegarder les données mergées localement
+                    saveDataToLocal();
                 }
-            }, 10000);
+            }, 30000);
             
             // Première synchronisation
             loadDataFromGitHub().then(() => {
                 displayChallenges();
                 displayUsers();
+                saveDataToLocal();
             });
         }
 
@@ -446,12 +474,15 @@
                 active: true
             };
 
+            // Sauvegarder immédiatement
             saveDataToLocal();
             displayChallenges();
 
             document.getElementById('challengeName').value = '';
             window.toggleCreateChallenge();
-            alert('🎉 Challenge créé et synchronisé !');
+            
+            console.log('✅ Challenge créé:', name);
+            alert('🎉 Challenge créé et sauvegardé localement !\n(Sera synchronisé avec GitHub quand le repo sera créé)');
         };
 
         window.joinChallenge = function(challengeKey) {
