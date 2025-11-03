@@ -142,25 +142,25 @@
                 <div style="font-size: 3rem;">🎓</div>
                 <h1>StudyChallenge GitHub</h1>
                 
-                <div class="sync-status">
-                    📡 SYNCHRONISATION VIA GITHUB JSON !
+                <div class="sync-status" style="background: var(--primary);">
+                    🔄 SYNCHRONISATION MANUELLE VIA GITHUB !
                 </div>
                 
                 <input type="text" id="usernameInput" class="input" placeholder="Votre nom d'utilisateur" />
                 <button class="btn" onclick="loginUser()">🚀 Se connecter</button>
                 
                 <div style="margin-top: 2rem; font-size: 0.9rem;">
-                    <strong>✅ Challenges synchronisés via GitHub !</strong><br>
-                    Données partagées en temps réel avec vos amis ! 🌍
+                    <strong>✅ Synchronisation entre appareils disponible !</strong><br>
+                    Partagez vos challenges avec vos amis ! 🌍
                 </div>
                 
                 <div style="margin-top: 1rem; padding: 1rem; background: var(--bg); border-radius: 8px; font-size: 0.8rem;">
-                    <h4>🔧 Comment ça marche :</h4>
+                    <h4>🔧 Synchronisation Manuelle :</h4>
                     <ul style="text-align: left; margin-top: 0.5rem;">
-                        <li>💾 <strong>Données dans un fichier JSON</strong> sur GitHub</li>
-                        <li>🔄 <strong>Auto-sync toutes les 10 secondes</strong></li>
-                        <li>👥 <strong>Partage entre tous les utilisateurs</strong></li>
-                        <li>⚡ <strong>Pas besoin de Firebase !</strong></li>
+                        <li>💾 <strong>Sauvegarde locale</strong> + sync quand vous voulez</li>
+                        <li>🔄 <strong>Bouton "Synchroniser"</strong> - vous contrôlez !</li>
+                        <li>👥 <strong>Partage avec vos amis</strong> via GitHub</li>
+                        <li>⚡ <strong>Pas de conflits automatiques</strong> - plus stable !</li>
                     </ul>
                 </div>
             </div>
@@ -197,9 +197,12 @@
 
                 <!-- Challenges -->
                 <div style="margin: 2rem 0;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3>🏆 Challenges GitHub</h3>
-                        <button class="btn" style="width: auto; padding: 0.5rem 1rem;" onclick="toggleCreateChallenge()">➕ Créer</button>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <h3>🏆 Challenges</h3>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button id="syncBtn" class="btn" style="width: auto; padding: 0.5rem 1rem; background: var(--primary);" onclick="manualSync()">🔄 Synchroniser</button>
+                            <button class="btn" style="width: auto; padding: 0.5rem 1rem;" onclick="toggleCreateChallenge()">➕ Créer</button>
+                        </div>
                     </div>
                     
                     <!-- Création challenge -->
@@ -336,26 +339,40 @@
         }
 
         function startSync() {
-            // Synchronisation automatique toutes les 30 secondes (plus long pour éviter les conflits)
-            syncInterval = setInterval(async () => {
-                if (currentUser) {
-                    console.log('🔄 Synchronisation automatique...');
-                    await loadDataFromGitHub();
+            // Mode synchronisation manuelle - pas d'auto-sync
+            console.log('🔄 Mode synchronisation manuelle activé');
+            
+            // Juste afficher les données actuelles
+            displayChallenges();
+            displayUsers();
+        }
+        
+        // Fonction de synchronisation manuelle
+        window.manualSync = async function() {
+            const syncBtn = document.getElementById('syncBtn');
+            syncBtn.textContent = '🔄 Sync...';
+            syncBtn.disabled = true;
+            
+            try {
+                console.log('🔄 Tentative de synchronisation...');
+                const success = await loadDataFromGitHub();
+                
+                if (success) {
                     displayChallenges();
                     displayUsers();
-                    
-                    // Sauvegarder les données mergées localement
                     saveDataToLocal();
+                    alert('✅ Synchronisation réussie avec GitHub !');
+                } else {
+                    alert('⚠️ GitHub non disponible. Créez le repository :\n\n1. Allez sur github.com\n2. Créez un repo "study-data"\n3. Ajoutez un fichier data.json');
                 }
-            }, 30000);
+            } catch (error) {
+                console.error('❌ Erreur de synchronisation:', error);
+                alert('❌ Erreur de synchronisation. Vérifiez votre connexion.');
+            }
             
-            // Première synchronisation
-            loadDataFromGitHub().then(() => {
-                displayChallenges();
-                displayUsers();
-                saveDataToLocal();
-            });
-        }
+            syncBtn.textContent = '🔄 Synchroniser';
+            syncBtn.disabled = false;
+        };
 
         // Fonctions globales
         window.loginUser = function() {
@@ -482,7 +499,8 @@
             window.toggleCreateChallenge();
             
             console.log('✅ Challenge créé:', name);
-            alert('🎉 Challenge créé et sauvegardé localement !\n(Sera synchronisé avec GitHub quand le repo sera créé)');
+            console.log('📊 Challenges actuels:', Object.keys(allChallenges));
+            alert('🎉 Challenge créé et sauvegardé !');
         };
 
         window.joinChallenge = function(challengeKey) {
@@ -495,6 +513,7 @@
             saveDataToLocal();
             displayChallenges();
             
+            console.log('✅ Challenge rejoint:', challengeKey);
             alert('🚀 Vous avez rejoint le challenge !');
         };
 
@@ -656,10 +675,38 @@
         // Initialisation
         setInterval(updateDisplay, 1000);
         
-        // Chargement initial des données
-        loadDataFromGitHub().then(() => {
-            console.log('📡 Application GitHub Sync prête !');
+        // Chargement initial des données - DÉSACTIVÉ pour éviter les conflits
+        // loadDataFromGitHub().then(() => {
+        //     console.log('📡 Application GitHub Sync prête !');
+        // });
+        
+        // Charger les données locales au démarrage
+        const localData = localStorage.getItem('studyGitHubData');
+        if (localData) {
+            const data = JSON.parse(localData);
+            allChallenges = data.challenges || {};
+            allUsers = data.users || {};
+            console.log('💾 Données locales chargées au démarrage');
+        } else {
+            allChallenges = defaultData.challenges;
+            allUsers = defaultData.users;
+            console.log('🆕 Utilisation des données par défaut');
+        }
+        
+        // Essayer une sync automatique au démarrage (optionnelle)
+        loadDataFromGitHub().then(success => {
+            if (success) {
+                document.getElementById('syncIndicator').textContent = '� GitHub Connecté';
+                document.getElementById('syncIndicator').style.background = 'var(--success)';
+                console.log('✅ Connecté à GitHub au démarrage');
+            } else {
+                document.getElementById('syncIndicator').textContent = '💾 Local + Sync Manuel';
+                document.getElementById('syncIndicator').style.background = '#f59e0b';
+                console.log('⚠️ GitHub non disponible - mode local avec sync manuel');
+            }
         });
+        
+        console.log('📡 Application prête avec synchronisation manuelle !');
     </script>
 </body>
 </html>
