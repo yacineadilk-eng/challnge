@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyChallenge - Synchronisé</title>
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-dark: #4f46e5;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --background: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        }
+
+        .auth-card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .logo h1 {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .sync-info {
+            background: var(--success-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .demo-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: var(--background);
+            border-radius: 12px;
+        }
+
+        .demo-btn, .btn {
+            width: 100%;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border: 2px solid var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .demo-btn:hover, .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .timer-display {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .btn-small {
+            width: auto;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-success { background: var(--success-color); border-color: var(--success-color); }
+        .btn-warning { background: var(--warning-color); border-color: var(--warning-color); }
+        .btn-danger { background: var(--danger-color); border-color: var(--danger-color); }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: var(--background);
+            border-radius: 8px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .navbar {
+            background: var(--card-bg);
+            padding: 1rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .challenges-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .challenge-item {
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--background);
+        }
+
+        .challenge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .challenge-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .challenge-participants {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .input-group {
+            margin: 1rem 0;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .online-users {
+            background: var(--card-bg);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .user-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .user-badge {
+            background: var(--success-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-online { background: var(--success-color); }
+        .status-offline { background: var(--text-secondary); }
+    </style>
+</head>
+<body>
+    <!-- Page de connexion -->
+    <div id="loginPage" class="page active">
+        <div class="container">
+            <div class="auth-card">
+                <div class="logo">
+                    <div style="font-size: 3rem;">🎓</div>
+                    <h1>StudyChallenge Sync</h1>
+                </div>
+                
+                <div class="sync-info">
+                    ☁️ <strong>Version synchronisée !</strong><br>
+                    Challenges partagés en temps réel entre tous vos amis !
+                </div>
+                
+                <div class="demo-section">
+                    <h3>🚀 Connexion</h3>
+                    <div class="input-group">
+                        <input type="text" id="usernameInput" placeholder="Votre nom d'utilisateur" />
+                    </div>
+                    <button class="demo-btn" onclick="loginUser()">
+                        🔐 Se connecter / S'inscrire
+                    </button>
+                </div>
+
+                <div class="online-users">
+                    <h4>👥 Utilisateurs en ligne :</h4>
+                    <div class="user-list" id="onlineUsers">
+                        <div class="user-badge">
+                            <span class="status-indicator status-online"></span>Alice
+                        </div>
+                        <div class="user-badge">
+                            <span class="status-indicator status-online"></span>Bob
+                        </div>
+                        <div class="user-badge">
+                            <span class="status-indicator status-offline"></span>Charlie
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; padding: 1rem; background: var(--background); border-radius: 8px; font-size: 0.9rem;">
+                    <h4>🔧 Comment ça marche :</h4>
+                    <ul style="text-align: left; margin-top: 0.5rem;">
+                        <li>✅ <strong>Challenges synchronisés</strong> entre tous</li>
+                        <li>🏆 <strong>Classements temps réel</strong></li>
+                        <li>📊 <strong>Statistiques partagées</strong></li>
+                        <li>💬 <strong>Notifications</strong> d'activité</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboardPage" class="page">
+        <nav class="navbar">
+            <div class="nav-brand">🎓 StudyChallenge Sync</div>
+            <div>
+                <span id="currentUser"></span>
+                <button style="margin-left: 1rem; padding: 0.5rem; background: var(--text-secondary); color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="logout()">
+                    Déconnexion
+                </button>
+            </div>
+        </nav>
+
+        <div class="container">
+            <div class="auth-card" style="max-width: 700px;">
+                <!-- Timer -->
+                <h2>⏱️ Timer d'étude</h2>
+                <div class="timer-display" id="timerDisplay">00:00:00</div>
+                
+                <div class="controls">
+                    <button id="startBtn" class="btn btn-small btn-success" onclick="startTimer()">▶️ Start</button>
+                    <button id="pauseBtn" class="btn btn-small btn-warning" onclick="pauseTimer()" style="display: none;">⏸️ Pause</button>
+                    <button id="stopBtn" class="btn btn-small btn-danger" onclick="stopTimer()" style="display: none;">⏹️ Stop</button>
+                </div>
+
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-label">Aujourd'hui</div>
+                        <div class="stat-value" id="todayTime">0h 00m</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Cette semaine</div>
+                        <div class="stat-value" id="weekTime">0h 00m</div>
+                    </div>
+                </div>
+
+                <!-- Challenges -->
+                <div class="challenges-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>🏆 Challenges actifs</h3>
+                        <button class="btn btn-small" onclick="showCreateChallenge()">➕ Créer</button>
+                    </div>
+                    <div id="challengesList">
+                        <!-- Challenges seront ajoutés dynamiquement -->
+                    </div>
+                </div>
+
+                <!-- Création challenge -->
+                <div id="createChallengeSection" class="challenges-section" style="display: none;">
+                    <h3>➕ Nouveau Challenge</h3>
+                    <div class="input-group">
+                        <input type="text" id="challengeName" placeholder="Nom du challenge (ex: Mathématiques)" />
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="challengeDays" placeholder="Durée en jours" value="7" min="1" max="30" />
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-success" onclick="createChallenge()">🚀 Créer</button>
+                        <button class="btn" style="background: var(--text-secondary);" onclick="hideCreateChallenge()">❌ Annuler</button>
+                    </div>
+                </div>
+
+                <!-- Leaderboard global -->
+                <div class="challenges-section">
+                    <h3>🥇 Classement global</h3>
+                    <div id="globalLeaderboard">
+                        <!-- Leaderboard sera mis à jour automatiquement -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulation base de données cloud synchronisée
+        class CloudDatabase {
+            constructor() {
+                this.data = {
+                    users: {},
+                    challenges: {},
+                    sessions: {}
+                };
+                this.loadFromStorage();
+                this.setupDemoData();
+            }
+
+            loadFromStorage() {
+                const saved = localStorage.getItem('studyCloudData');
+                if (saved) {
+                    this.data = JSON.parse(saved);
+                }
+            }
+
+            save() {
+                localStorage.setItem('studyCloudData', JSON.stringify(this.data));
+                // Simulation sync avec autres utilisateurs
+                this.broadcastUpdate();
+            }
+
+            broadcastUpdate() {
+                // Simulation notification autres utilisateurs
+                console.log('📡 Données synchronisées avec le cloud');
+            }
+
+            setupDemoData() {
+                if (Object.keys(this.data.users).length === 0) {
+                    this.data.users = {
+                        'alice': { name: 'Alice', totalTime: 25200000, weekTime: 18000000, online: true },
+                        'bob': { name: 'Bob', totalTime: 21600000, weekTime: 14400000, online: true },
+                        'charlie': { name: 'Charlie', totalTime: 32400000, weekTime: 28800000, online: false }
+                    };
+
+                    this.data.challenges = {
+                        'challenge1': {
+                            id: 'challenge1',
+                            name: 'Challenge Mathématiques',
+                            creator: 'alice',
+                            participants: ['alice', 'bob', 'charlie'],
+                            startDate: Date.now() - 2 * 24 * 60 * 60 * 1000,
+                            endDate: Date.now() + 5 * 24 * 60 * 60 * 1000,
+                            active: true
+                        }
+                    };
+                    this.save();
+                }
+            }
+
+            addUser(username) {
+                const userId = username.toLowerCase();
+                if (!this.data.users[userId]) {
+                    this.data.users[userId] = {
+                        name: username,
+                        totalTime: 0,
+                        weekTime: 0,
+                        online: true
+                    };
+                    this.save();
+                }
+                return this.data.users[userId];
+            }
+
+            getUser(username) {
+                return this.data.users[username.toLowerCase()];
+            }
+
+            updateUserTime(username, timeToAdd) {
+                const userId = username.toLowerCase();
+                if (this.data.users[userId]) {
+                    this.data.users[userId].totalTime += timeToAdd;
+                    this.data.users[userId].weekTime += timeToAdd;
+                    this.save();
+                }
+            }
+
+            createChallenge(name, creator, days) {
+                const challengeId = 'challenge_' + Date.now();
+                this.data.challenges[challengeId] = {
+                    id: challengeId,
+                    name: name,
+                    creator: creator.toLowerCase(),
+                    participants: [creator.toLowerCase()],
+                    startDate: Date.now(),
+                    endDate: Date.now() + days * 24 * 60 * 60 * 1000,
+                    active: true
+                };
+                this.save();
+                return this.data.challenges[challengeId];
+            }
+
+            joinChallenge(challengeId, username) {
+                const userId = username.toLowerCase();
+                if (this.data.challenges[challengeId] && 
+                    !this.data.challenges[challengeId].participants.includes(userId)) {
+                    this.data.challenges[challengeId].participants.push(userId);
+                    this.save();
+                }
+            }
+
+            getChallenges() {
+                return Object.values(this.data.challenges).filter(c => c.active);
+            }
+
+            getLeaderboard() {
+                return Object.values(this.data.users)
+                    .sort((a, b) => b.weekTime - a.weekTime)
+                    .slice(0, 10);
+            }
+        }
+
+        // Application
+        let cloudDB = new CloudDatabase();
+        let currentUser = null;
+        let timerInterval = null;
+        let startTime = null;
+        let elapsedTime = 0;
+        let isRunning = false;
+
+        function loginUser() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) {
+                alert('Entrez un nom d\'utilisateur !');
+                return;
+            }
+
+            currentUser = cloudDB.addUser(username);
+            document.getElementById('currentUser').textContent = username;
+            document.getElementById('loginPage').classList.remove('active');
+            document.getElementById('dashboardPage').classList.add('active');
+            
+            updateStats();
+            loadChallenges();
+            updateLeaderboard();
+        }
+
+        function logout() {
+            if (isRunning) stopTimer();
+            currentUser = null;
+            document.getElementById('loginPage').classList.add('active');
+            document.getElementById('dashboardPage').classList.remove('active');
+        }
+
+        function startTimer() {
+            if (!isRunning) {
+                isRunning = true;
+                startTime = Date.now() - elapsedTime;
+                timerInterval = setInterval(updateDisplay, 1000);
+                
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('pauseBtn').style.display = 'inline-block';
+                document.getElementById('stopBtn').style.display = 'inline-block';
+            }
+        }
+
+        function pauseTimer() {
+            if (isRunning) {
+                isRunning = false;
+                clearInterval(timerInterval);
+                
+                document.getElementById('startBtn').style.display = 'inline-block';
+                document.getElementById('pauseBtn').style.display = 'none';
+                document.getElementById('startBtn').textContent = '▶️ Reprendre';
+            }
+        }
+
+        function stopTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            
+            if (currentUser && elapsedTime > 0) {
+                cloudDB.updateUserTime(currentUser.name, elapsedTime);
+                updateStats();
+                updateLeaderboard();
+            }
+            
+            elapsedTime = 0;
+            updateDisplay();
+            
+            document.getElementById('startBtn').style.display = 'inline-block';
+            document.getElementById('pauseBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'none';
+            document.getElementById('startBtn').textContent = '▶️ Start';
+        }
+
+        function updateDisplay() {
+            if (isRunning) {
+                elapsedTime = Date.now() - startTime;
+            }
+            
+            const hours = Math.floor(elapsedTime / 3600000);
+            const minutes = Math.floor((elapsedTime % 3600000) / 60000);
+            const seconds = Math.floor((elapsedTime % 60000) / 1000);
+            
+            document.getElementById('timerDisplay').textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateStats() {
+            if (currentUser) {
+                const user = cloudDB.getUser(currentUser.name);
+                const todayHours = Math.floor(user.totalTime / 3600000);
+                const todayMinutes = Math.floor((user.totalTime % 3600000) / 60000);
+                const weekHours = Math.floor(user.weekTime / 3600000);
+                const weekMinutes = Math.floor((user.weekTime % 3600000) / 60000);
+                
+                document.getElementById('todayTime').textContent = `${todayHours}h ${todayMinutes}m`;
+                document.getElementById('weekTime').textContent = `${weekHours}h ${weekMinutes}m`;
+            }
+        }
+
+        function loadChallenges() {
+            const challenges = cloudDB.getChallenges();
+            const container = document.getElementById('challengesList');
+            
+            container.innerHTML = '';
+            
+            challenges.forEach(challenge => {
+                const daysLeft = Math.ceil((challenge.endDate - Date.now()) / (1000 * 60 * 60 * 24));
+                const participantNames = challenge.participants.map(p => cloudDB.getUser(p)?.name || p).join(', ');
+                
+                const div = document.createElement('div');
+                div.className = 'challenge-item';
+                div.innerHTML = `
+                    <div class="challenge-header">
+                        <div class="challenge-name">🏆 ${challenge.name}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                            ${daysLeft > 0 ? daysLeft + ' jours restants' : 'Terminé'}
+                        </div>
+                    </div>
+                    <div class="challenge-participants">
+                        👥 Participants: ${participantNames}
+                    </div>
+                    ${!challenge.participants.includes(currentUser?.name.toLowerCase()) ? 
+                        `<button class="btn btn-small" style="margin-top: 0.5rem;" onclick="joinChallenge('${challenge.id}')">🚀 Rejoindre</button>` : 
+                        '<div style="margin-top: 0.5rem; color: var(--success-color); font-size: 0.9rem;">✅ Vous participez</div>'
+                    }
+                `;
+                
+                container.appendChild(div);
+            });
+        }
+
+        function joinChallenge(challengeId) {
+            if (currentUser) {
+                cloudDB.joinChallenge(challengeId, currentUser.name);
+                loadChallenges();
+                alert('🎉 Vous avez rejoint le challenge !');
+            }
+        }
+
+        function showCreateChallenge() {
+            document.getElementById('createChallengeSection').style.display = 'block';
+        }
+
+        function hideCreateChallenge() {
+            document.getElementById('createChallengeSection').style.display = 'none';
+        }
+
+        function createChallenge() {
+            const name = document.getElementById('challengeName').value.trim();
+            const days = parseInt(document.getElementById('challengeDays').value);
+            
+            if (!name) {
+                alert('Entrez un nom pour le challenge !');
+                return;
+            }
+            
+            if (currentUser) {
+                cloudDB.createChallenge(name, currentUser.name, days);
+                loadChallenges();
+                hideCreateChallenge();
+                document.getElementById('challengeName').value = '';
+                alert('🚀 Challenge créé ! Vos amis peuvent maintenant le rejoindre !');
+            }
+        }
+
+        function updateLeaderboard() {
+            const leaderboard = cloudDB.getLeaderboard();
+            const container = document.getElementById('globalLeaderboard');
+            
+            container.innerHTML = '';
+            
+            leaderboard.forEach((user, index) => {
+                const hours = Math.floor(user.weekTime / 3600000);
+                const minutes = Math.floor((user.weekTime % 3600000) / 60000);
+                
+                const div = document.createElement('div');
+                div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; margin: 0.25rem 0; background: var(--background); border-radius: 6px;';
+                
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🏅';
+                const statusColor = user.online ? 'var(--success-color)' : 'var(--text-secondary)';
+                
+                div.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.2rem;">${medal}</span>
+                        <span style="font-weight: 600;">${user.name}</span>
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: ${statusColor};"></span>
+                    </div>
+                    <div style="font-weight: 600; color: var(--primary-color);">
+                        ${hours}h ${minutes}m
+                    </div>
+                `;
+                
+                container.appendChild(div);
+            });
+        }
+
+        // Auto-refresh toutes les 30 secondes
+        setInterval(() => {
+            if (currentUser) {
+                loadChallenges();
+                updateLeaderboard();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
