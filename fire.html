@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyChallenge - Firebase Sync</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1f2937;
+            --border: #e5e7eb;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        .container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+        }
+        .card {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border: none;
+            background: var(--primary);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: #4f46e5; transform: translateY(-2px); }
+        .btn-success { background: var(--success); }
+        .btn-danger { background: var(--danger); }
+        .input {
+            width: 100%;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .input:focus { outline: none; border-color: var(--primary); }
+        .timer {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+        }
+        .page { display: none; }
+        .page.active { display: block; }
+        .challenge-item {
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            text-align: left;
+        }
+        .online { color: var(--success); }
+        .sync-status {
+            background: var(--success);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Page de connexion -->
+    <div id="loginPage" class="page active">
+        <div class="container">
+            <div class="card">
+                <div style="font-size: 3rem;">🎓</div>
+                <h1>StudyChallenge Firebase</h1>
+                
+                <div class="sync-status">
+                    🔥 VRAIE synchronisation Firebase !
+                </div>
+                
+                <input type="text" id="usernameInput" class="input" placeholder="Votre nom d'utilisateur" />
+                <button class="btn" onclick="loginUser()">🚀 Se connecter</button>
+                
+                <div style="margin-top: 2rem; font-size: 0.9rem;">
+                    <strong>✅ Synchronisation temps réel entre TOUS les appareils !</strong><br>
+                    Vos amis verront vos challenges instantanément !
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboardPage" class="page">
+        <div class="container">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 id="userTitle">🎓 StudyChallenge</h2>
+                    <button style="padding: 0.5rem 1rem; background: #6b7280; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="logout()">
+                        Déconnexion
+                    </button>
+                </div>
+
+                <!-- Timer -->
+                <h3>⏱️ Timer d'étude</h3>
+                <div class="timer" id="timerDisplay">00:00:00</div>
+                
+                <div style="display: flex; gap: 0.5rem; justify-content: center; margin: 1rem 0;">
+                    <button id="startBtn" class="btn btn-success" style="width: auto; padding: 0.5rem 1rem;" onclick="startTimer()">▶️ Start</button>
+                    <button id="pauseBtn" class="btn" style="width: auto; padding: 0.5rem 1rem; display: none; background: var(--warning);" onclick="pauseTimer()">⏸️ Pause</button>
+                    <button id="stopBtn" class="btn btn-danger" style="width: auto; padding: 0.5rem 1rem; display: none;" onclick="stopTimer()">⏹️ Stop</button>
+                </div>
+
+                <div style="display: flex; justify-content: space-around; margin: 2rem 0; padding: 1rem; background: var(--bg); border-radius: 8px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.8rem; color: #6b7280;">Temps total</div>
+                        <div style="font-size: 1.2rem; font-weight: 600; color: var(--primary);" id="totalTime">0h 00m</div>
+                    </div>
+                </div>
+
+                <!-- Challenges -->
+                <div style="margin: 2rem 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>🏆 Challenges Firebase</h3>
+                        <button class="btn" style="width: auto; padding: 0.5rem 1rem;" onclick="toggleCreateChallenge()">➕ Créer</button>
+                    </div>
+                    
+                    <!-- Création challenge -->
+                    <div id="createSection" style="display: none; margin: 1rem 0; padding: 1rem; background: var(--bg); border-radius: 8px;">
+                        <input type="text" id="challengeName" class="input" placeholder="Nom du challenge" />
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-success" onclick="createChallenge()">🚀 Créer</button>
+                            <button class="btn" style="background: #6b7280;" onclick="toggleCreateChallenge()">❌ Annuler</button>
+                        </div>
+                    </div>
+                    
+                    <div id="challengesList">
+                        <!-- Challenges Firebase ici -->
+                    </div>
+                </div>
+
+                <!-- Utilisateurs en ligne -->
+                <div style="margin: 2rem 0;">
+                    <h3>👥 Utilisateurs connectés</h3>
+                    <div id="onlineUsers" style="margin: 1rem 0;">
+                        <!-- Utilisateurs en ligne ici -->
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div style="text-align: center; margin-top: 2rem; font-size: 0.9rem; color: #6b7280;">
+                    <span id="connectionStatus">🔥 Connecté à Firebase</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Configuration Firebase (REMPLACEZ par votre config)
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { 
+            getDatabase, 
+            ref, 
+            set, 
+            push, 
+            onValue, 
+            serverTimestamp,
+            onDisconnect 
+        } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
+
+        // Configuration Firebase (DEMO - remplacez par la vôtre)
+        const firebaseConfig = {
+            databaseURL: "https://studychallenge-demo-default-rtdb.firebaseio.com/"
+        };
+
+        // Initialisation Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Variables globales
+        let currentUser = null;
+        let timerInterval = null;
+        let startTime = null;
+        let elapsedTime = 0;
+        let isRunning = false;
+        let userTotalTime = 0;
+
+        // Fonctions globales pour HTML
+        window.loginUser = function() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) {
+                alert('Entrez un nom d\'utilisateur !');
+                return;
+            }
+
+            currentUser = username;
+            
+            // Ajouter utilisateur à Firebase
+            const userRef = ref(db, `users/${username}`);
+            set(userRef, {
+                name: username,
+                online: true,
+                lastSeen: serverTimestamp(),
+                totalTime: 0
+            });
+
+            // Marquer hors ligne à la déconnexion
+            onDisconnect(userRef).update({ online: false });
+
+            // Interface
+            document.getElementById('userTitle').textContent = `🎓 ${username}`;
+            document.getElementById('loginPage').classList.remove('active');
+            document.getElementById('dashboardPage').classList.add('active');
+            
+            // Écouter les données Firebase
+            startListening();
+        };
+
+        window.logout = function() {
+            if (currentUser) {
+                const userRef = ref(db, `users/${currentUser}`);
+                set(userRef, { 
+                    name: currentUser, 
+                    online: false, 
+                    lastSeen: serverTimestamp(),
+                    totalTime: userTotalTime 
+                });
+            }
+            
+            if (isRunning) stopTimer();
+            currentUser = null;
+            
+            document.getElementById('loginPage').classList.add('active');
+            document.getElementById('dashboardPage').classList.remove('active');
+        };
+
+        window.startTimer = function() {
+            if (!isRunning) {
+                isRunning = true;
+                startTime = Date.now() - elapsedTime;
+                timerInterval = setInterval(updateDisplay, 1000);
+                
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('pauseBtn').style.display = 'inline-block';
+                document.getElementById('stopBtn').style.display = 'inline-block';
+            }
+        };
+
+        window.pauseTimer = function() {
+            if (isRunning) {
+                isRunning = false;
+                clearInterval(timerInterval);
+                
+                document.getElementById('startBtn').style.display = 'inline-block';
+                document.getElementById('pauseBtn').style.display = 'none';
+                document.getElementById('startBtn').textContent = '▶️ Reprendre';
+            }
+        };
+
+        window.stopTimer = function() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            
+            if (currentUser && elapsedTime > 0) {
+                // Sauvegarder le temps dans Firebase
+                userTotalTime += elapsedTime;
+                const userRef = ref(db, `users/${currentUser}`);
+                set(userRef, {
+                    name: currentUser,
+                    online: true,
+                    totalTime: userTotalTime,
+                    lastSeen: serverTimestamp()
+                });
+            }
+            
+            elapsedTime = 0;
+            updateDisplay();
+            
+            document.getElementById('startBtn').style.display = 'inline-block';
+            document.getElementById('pauseBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'none';
+            document.getElementById('startBtn').textContent = '▶️ Start';
+        };
+
+        window.toggleCreateChallenge = function() {
+            const section = document.getElementById('createSection');
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        };
+
+        window.createChallenge = function() {
+            const name = document.getElementById('challengeName').value.trim();
+            if (!name || !currentUser) return;
+
+            const challengeRef = ref(db, 'challenges');
+            push(challengeRef, {
+                name: name,
+                creator: currentUser,
+                participants: [currentUser],
+                createdAt: serverTimestamp(),
+                active: true
+            });
+
+            document.getElementById('challengeName').value = '';
+            toggleCreateChallenge();
+            alert('🎉 Challenge créé et synchronisé !');
+        };
+
+        window.joinChallenge = function(challengeKey, participants) {
+            if (!currentUser || participants.includes(currentUser)) return;
+            
+            participants.push(currentUser);
+            const challengeRef = ref(db, `challenges/${challengeKey}`);
+            set(challengeRef, {
+                name: document.querySelector(`[data-key="${challengeKey}"] .challenge-name`).textContent.replace('🏆 ', ''),
+                creator: participants[0],
+                participants: participants,
+                createdAt: serverTimestamp(),
+                active: true
+            });
+            
+            alert('🚀 Vous avez rejoint le challenge !');
+        };
+
+        function updateDisplay() {
+            if (isRunning) {
+                elapsedTime = Date.now() - startTime;
+            }
+            
+            const hours = Math.floor(elapsedTime / 3600000);
+            const minutes = Math.floor((elapsedTime % 3600000) / 60000);
+            const seconds = Math.floor((elapsedTime % 60000) / 1000);
+            
+            document.getElementById('timerDisplay').textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Mise à jour temps total
+            const totalHours = Math.floor(userTotalTime / 3600000);
+            const totalMinutes = Math.floor((userTotalTime % 3600000) / 60000);
+            document.getElementById('totalTime').textContent = `${totalHours}h ${totalMinutes}m`;
+        }
+
+        function startListening() {
+            // Écouter les challenges
+            const challengesRef = ref(db, 'challenges');
+            onValue(challengesRef, (snapshot) => {
+                const challenges = snapshot.val() || {};
+                displayChallenges(challenges);
+            });
+
+            // Écouter les utilisateurs
+            const usersRef = ref(db, 'users');
+            onValue(usersRef, (snapshot) => {
+                const users = snapshot.val() || {};
+                displayUsers(users);
+                
+                // Mettre à jour notre temps total
+                if (users[currentUser]) {
+                    userTotalTime = users[currentUser].totalTime || 0;
+                    updateDisplay();
+                }
+            });
+        }
+
+        function displayChallenges(challenges) {
+            const container = document.getElementById('challengesList');
+            container.innerHTML = '';
+            
+            Object.entries(challenges).forEach(([key, challenge]) => {
+                if (!challenge.active) return;
+                
+                const div = document.createElement('div');
+                div.className = 'challenge-item';
+                div.dataset.key = key;
+                div.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <div class="challenge-name" style="font-weight: 600;">🏆 ${challenge.name}</div>
+                        <div style="font-size: 0.8rem; color: #6b7280;">
+                            par ${challenge.creator}
+                        </div>
+                    </div>
+                    <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 0.5rem;">
+                        👥 Participants: ${challenge.participants?.join(', ') || 'Aucun'}
+                    </div>
+                    ${!challenge.participants?.includes(currentUser) ? 
+                        `<button class="btn" style="padding: 0.5rem 1rem; margin-top: 0.5rem;" onclick="joinChallenge('${key}', ${JSON.stringify(challenge.participants || [])})">🚀 Rejoindre</button>` : 
+                        '<div style="margin-top: 0.5rem; color: var(--success); font-size: 0.9rem;">✅ Vous participez</div>'
+                    }
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function displayUsers(users) {
+            const container = document.getElementById('onlineUsers');
+            container.innerHTML = '';
+            
+            Object.entries(users).forEach(([username, user]) => {
+                const hours = Math.floor((user.totalTime || 0) / 3600000);
+                const minutes = Math.floor(((user.totalTime || 0) % 3600000) / 60000);
+                
+                const div = document.createElement('div');
+                div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; margin: 0.25rem 0; background: var(--bg); border-radius: 6px;';
+                div.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: ${user.online ? 'var(--success)' : '#6b7280'};"></span>
+                        <span style="font-weight: 500;">${user.name}</span>
+                        <span style="font-size: 0.8rem; color: #6b7280;">${user.online ? 'En ligne' : 'Hors ligne'}</span>
+                    </div>
+                    <div style="font-weight: 600; color: var(--primary);">
+                        ${hours}h ${minutes}m
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+    </script>
+</body>
+</html>
