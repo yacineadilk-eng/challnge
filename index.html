@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyChallenge - Défis d'études entre amis</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Page de connexion -->
+    <div id="loginPage" class="page active">
+        <div class="container">
+            <div class="auth-card">
+                <div class="logo">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h1>StudyChallenge</h1>
+                </div>
+                
+                <div class="auth-tabs">
+                    <button class="tab-btn active" onclick="showLogin()">Connexion</button>
+                    <button class="tab-btn" onclick="showRegister()">Inscription</button>
+                </div>
+
+                <!-- Formulaire de connexion -->
+                <div id="loginForm" class="auth-form active">
+                    <h2>Se connecter</h2>
+                    <form onsubmit="login(event)">
+                        <div class="input-group">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="loginUsername" placeholder="Nom d'utilisateur" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="loginPassword" placeholder="Mot de passe" required>
+                        </div>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-sign-in-alt"></i> Se connecter
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Formulaire d'inscription -->
+                <div id="registerForm" class="auth-form">
+                    <h2>Créer un compte</h2>
+                    <form onsubmit="register(event)">
+                        <div class="input-group">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="registerUsername" placeholder="Nom d'utilisateur" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="registerEmail" placeholder="Email" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="registerPassword" placeholder="Mot de passe" required>
+                        </div>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-user-plus"></i> S'inscrire
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard principal -->
+    <div id="dashboardPage" class="page">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <i class="fas fa-graduation-cap"></i>
+                StudyChallenge
+            </div>
+            <div class="nav-user">
+                <span id="currentUser"></span>
+                <button onclick="logout()" class="btn-secondary">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </nav>
+
+        <div class="dashboard-container">
+            <!-- Section principale du timer -->
+            <div class="timer-section">
+                <div class="timer-card">
+                    <h2>Session d'étude</h2>
+                    <div class="timer-display">
+                        <span id="timerDisplay">00:00:00</span>
+                    </div>
+                    <div class="timer-controls">
+                        <button id="startBtn" onclick="startStudy()" class="btn-success">
+                            <i class="fas fa-play"></i> Commencer
+                        </button>
+                        <button id="pauseBtn" onclick="pauseStudy()" class="btn-warning" style="display: none;">
+                            <i class="fas fa-pause"></i> Pause
+                        </button>
+                        <button id="stopBtn" onclick="stopStudy()" class="btn-danger" style="display: none;">
+                            <i class="fas fa-stop"></i> Arrêter
+                        </button>
+                    </div>
+                    <div class="study-stats">
+                        <div class="stat">
+                            <span class="stat-label">Aujourd'hui</span>
+                            <span id="todayTime" class="stat-value">0h 00m</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Cette semaine</span>
+                            <span id="weekTime" class="stat-value">0h 00m</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section des challenges -->
+            <div class="challenges-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-trophy"></i> Challenges actifs</h2>
+                    <button onclick="createChallenge()" class="btn-primary">
+                        <i class="fas fa-plus"></i> Nouveau challenge
+                    </button>
+                </div>
+                <div id="challengesList" class="challenges-list">
+                    <!-- Les challenges seront ajoutés dynamiquement -->
+                </div>
+            </div>
+
+            <!-- Classement -->
+            <div class="leaderboard-section">
+                <h2><i class="fas fa-medal"></i> Classement de la semaine</h2>
+                <div id="leaderboard" class="leaderboard">
+                    <!-- Le classement sera généré dynamiquement -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour créer un challenge -->
+    <div id="challengeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Créer un nouveau challenge</h3>
+                <span class="close" onclick="closeChallengeModal()">&times;</span>
+            </div>
+            <form onsubmit="submitChallenge(event)">
+                <div class="input-group">
+                    <label>Nom du challenge</label>
+                    <input type="text" id="challengeName" placeholder="Ex: Challenge Mathématiques" required>
+                </div>
+                <div class="input-group">
+                    <label>Durée (jours)</label>
+                    <select id="challengeDuration">
+                        <option value="1">1 jour</option>
+                        <option value="3">3 jours</option>
+                        <option value="7" selected>7 jours</option>
+                        <option value="14">14 jours</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Inviter des amis (optionnel)</label>
+                    <input type="text" id="challengeFriends" placeholder="Noms d'utilisateur séparés par des virgules">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" onclick="closeChallengeModal()" class="btn-secondary">Annuler</button>
+                    <button type="submit" class="btn-primary">Créer le challenge</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="database.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
